@@ -1,0 +1,61 @@
+{
+  "name": "vue2-babylon",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "build:dev": "vue-cli-service build --mode dev",
+    "build:prod": "vue-cli-service build --mode prod"
+  },
+  "dependencies": {
+    "babylonjs": "^6.25.1",
+    "core-js": "^3.8.3",
+    "earcut": "^2.2.4",
+    "vue": "^2.6.14",
+    "vue-class-component": "^7.2.3",
+    "vue-property-decorator": "^9.1.2",
+    "vue-router": "^3.5.1"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.23.2",
+    "@babylonjs/core": "^6.25.1",
+    "@babylonjs/gui": "^6.25.1",
+    "@types/earcut": "^2.1.3",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-typescript": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "@vue/eslint-config-typescript": "^9.1.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "typescript": "~4.5.5",
+    "vue-template-compiler": "^2.6.14",
+    "webpack-merge": "^5.10.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended",
+      "@vue/typescript/recommended"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2020
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

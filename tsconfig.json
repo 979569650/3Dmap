@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "target": "es2017",
+    "module": "esnext",
+    "strict": true,
+    "jsx": "preserve",
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "useDefineForClassFields": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "types": [
+      "webpack-env"
+    ],
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    },
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "src/components/sceneConfig.ts",
+    "src",
+    ""
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
