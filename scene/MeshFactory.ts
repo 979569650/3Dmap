@@ -1,6 +1,6 @@
 import {
     Scene, Vector3, DynamicTexture, Mesh, StandardMaterial, Color3
-    , MeshBuilder, ActionManager, ExecuteCodeAction, InterpolateValueAction, Curve3, ParticleSystem, Texture, Color4, TrailMesh, Vector4, CreatePolygon, Engine
+    , MeshBuilder, ActionManager, ExecuteCodeAction, InterpolateValueAction, Curve3, ParticleSystem, Texture, Color4, TrailMesh, Vector4, CreatePolygon, Engine, SimplificationType, InstancedMesh, CreateSphere
 } from "@babylonjs/core";
 import { DeepImmutableObject, Nullable } from "@babylonjs/core/types";
 import { AdvancedDynamicTexture, Control, TextBlock } from "@babylonjs/gui"
@@ -128,6 +128,8 @@ export class MeshFactory {
      * @param name 
      * @param text 文本内容
      * @param scene 
+     * @param font 字体 
+     * @param faceColor 颜色
      * @returns 
      */
     public static Text_3D(name: string, text: string, scene: Scene, options?: { font?: any, faceColor?: Color4[] | undefined }) {
@@ -185,15 +187,19 @@ export class MeshFactory {
      */
     public static map(mapData: string | any[], centerX: number, centerZ: number, hight: number, scene: Scene) {
         var text_3d_material = MaterialFactory.RGB_emissive(1, 1, 1, scene)
-        var material = MaterialFactory.RGB_emissive(1, 1, 1, scene)
+        var material = MaterialFactory.RGB_emissive(1, 1, 1, scene) // 地图颜色
         var transColor = this.sceneConfig.map.topColor
         var disColor = this.sceneConfig.map.disColor
-        var material2 = MaterialFactory.RGB_emissive(
+        var material2 = MaterialFactory.RGB_emissive( // 变色颜色材质
             disColor.r / transColor.r,
             disColor.g / transColor.g,
             disColor.b / transColor.b,
             scene)
-        var grandModel: any = new Mesh("grandModel", scene);
+        var grandModel: any = new Mesh("MAP", scene);
+
+
+        const adt = AdvancedDynamicTexture.CreateFullscreenUI("地名")
+
         for (let l = 0; l < mapData.length; l++) {
             // console.log(l)
             var boundaries = mapData[l].geometry.coordinates;
@@ -201,9 +207,9 @@ export class MeshFactory {
             var parentModel = new Mesh(mapData[l].properties.name, scene)
 
             var centerXZ: number[]
-            centerXZ = mapData[l].properties.centroid
+            centerXZ = mapData[l].properties.centroid != undefined ? mapData[l].properties.centroid : mapData[l].properties.center
 
-            // for (var i = 0; i <= 1; i++) {
+            // for (var i = 0; i <= 1; i++) {            
             boundaries.forEach((pointGroup: any[]) => {
                 var points: any[] = [];
                 // console.log(pointGroup)
@@ -216,31 +222,11 @@ export class MeshFactory {
 
                 // 卡特穆尔-罗姆样条所需点集
                 var catmullRom = Curve3.CreateCatmullRomSpline(points, 60, true)
-                // console.log(catmullRom.getPoints())
-
-                // var cter = CreateSphere('center', { diameter: 0.01 }, scene);
-                // cter.isVisible = false
-                // // if (chinaData[l] !=undefined){
-                // cter.position = new Vector3(centerXZ[0] - centerX, hight, centerXZ[1] - centerZ)
-                // }
-                if (mapData[l].properties.name != undefined) {
-                    // var name = text(adt, cter, )
-                    var text = this.Text_3D(mapData[l].properties.name, mapData[l].properties.name, scene)
-                    if (text != null) {
-                        text.position = new Vector3(centerXZ[0] - centerX, 0, centerXZ[1] - centerZ)
-                        text.rotation.x = Math.PI / 2
-                        text.material = text_3d_material
-                        text.parent = parentModel;
-                        text.isPickable = false
-                        // 将侧面的材质应用到字体的侧面 
-                        // text.sideOrientation = BABYLON.Mesh.DOUBLESIDE; // 设置字体的侧面可见
-                        // text.material.subMaterials = [material2];
-                    }
-                }
+                // console.log(catmullRom.getPoints()) 
 
                 //面
                 // var polygon = CreatePolygon("polygon", points, scene);
-                var polygon: any = CreatePolygon("polygon", {
+                var polygon: Mesh = CreatePolygon("polygon", {
                     shape: points,
                     sideOrientation: Mesh.DOUBLESIDE,
                     depth: hight,
@@ -302,6 +288,31 @@ export class MeshFactory {
             })
             // }
 
+
+            if (this.sceneConfig.Text3D.switch && mapData[l].properties.name != undefined) {
+                // var name = text(adt, cter, )
+                const text = this.Text_3D(mapData[l].properties.name, mapData[l].properties.name, scene)
+                if (text != null) {
+                    text.position = new Vector3(centerXZ[0] - centerX, 0, centerXZ[1] - centerZ)
+                    text.rotation.x = Math.PI / 2
+                    text.material = text_3d_material
+                    text.parent = parentModel;
+                    text.isPickable = false
+                    // 将侧面的材质应用到字体的侧面 
+                    // text.sideOrientation = BABYLON.Mesh.DOUBLESIDE; // 设置字体的侧面可见
+                    // text.material.subMaterials = [material2];
+                }
+            }
+
+            if (this.sceneConfig.Text2D.switch && mapData[l].properties.name != undefined) {
+                const cter = CreateSphere('center', { diameter: 0.01 }, scene);
+                cter.isVisible = false
+                cter.parent = parentModel
+                cter.position = new Vector3(centerXZ[0] - centerX, 0, centerXZ[1] - centerZ)
+                const text: any = this.GUIText(adt, cter, mapData[l].properties.name)
+            }
+
+
             parentModel.parent = grandModel;
 
         }
@@ -310,7 +321,7 @@ export class MeshFactory {
     }
 
     /**
-     * 地图中生成一组飞线————这个方法的飞线终点固定（山东），起点自定义
+     * 地图中生成一组飞线
      * @param mapData 地图数据：注意传入的不是原始数据，而是：例如传入数据是china，那么要传入china.features
      * @param centerX 地图中心X坐标
      * @param centerZ 地图中心Z坐标
@@ -319,22 +330,25 @@ export class MeshFactory {
      * @param scene 
      * @returns 
      */
-    public static flyLine(mapData: any[], centerX: number, centerZ: number, flyStar: string | any[], engine: Engine, scene: Scene) {
+    public static flyLine(mapData: any[], centerX: number, centerZ: number, flyStar: string | any[], flyEnd: any,flyColor: any, engine: Engine, scene: Scene) {
         const flyLineParent = new Mesh('flyLineParent', scene) // 用于存放飞线模型
 
         const color = new Color3(
-            this.sceneConfig.flyLine.color.r / 255,
-            this.sceneConfig.flyLine.color.g / 255,
-            this.sceneConfig.flyLine.color.b / 255) // 颜色
+            flyColor.r / 255,
+            flyColor.g / 255,
+            flyColor.b / 255
+        ) // 颜色
         const result = MaterialFactory.picMaterial(require('../src/resources/' + this.sceneConfig.flyLine.picture), color, scene) // 引用资源
         const pMaterial = result.picMaterial
+        result.flowTexture.uScale = this.sceneConfig.flyLine.uScale;
+        result.flowTexture.vScale = this.sceneConfig.flyLine.vScale;
 
 
         mapData.forEach(f => {
             if (flyStar.includes(f.properties.name)) {
                 if (f.properties.center != undefined) {
-                    var x0 = (117.000923 - centerX)
-                    var z0 = (36.675807 - centerZ)
+                    var x0 = (flyEnd[0] - centerX)
+                    var z0 = (flyEnd[1] - centerZ)
                     var x = (f.properties.center[0] - centerX)
                     var z = (f.properties.center[1] - centerZ)
 
@@ -354,7 +368,7 @@ export class MeshFactory {
                         new Vector3(x, 0.5, z)
                     ]
                     var path = this.BezierLine(pathPoint).getPoints()
-                    var Wl = this.widthLine('feixian', 0.5, path, undefined)
+                    var Wl = this.widthLine('feixian', this.sceneConfig.flyLine.width, path, undefined)
                     // Wl.position.y += hight;
                     Wl.material = pMaterial
                     Wl.renderingGroupId = 2
@@ -380,16 +394,16 @@ export class MeshFactory {
      * @param name 文本内容/名称
      * @returns 
      */
-    public static GUIText(adt: AdvancedDynamicTexture, mesh: Mesh, name: string) {
+    public static GUIText(adt: AdvancedDynamicTexture, mesh: Mesh | InstancedMesh, name: string) {
         var h = 1
         var wMax = name.length * 1.5
         // const width = '160px'
-        const size = 20
-        const width = size * (8 / 15) * wMax + 'px'
+        const size = this.sceneConfig.Text2D.size
+        const width = size * (12 / 15) * wMax + 'px'
         const height = size * (18 / 15) * h + 'px' // h是行数，18px为一行
 
         const text = new TextBlock(name, name)
-        text.color = '#ffffff'
+        text.color = this.sceneConfig.Text2D.color
         text.fontWeight = '300' // 字体粗细
         text.fontSizeInPixels = size
         // text.fontFamily = 'YSBTH';  //这里加载字体资源作为字体
@@ -406,7 +420,7 @@ export class MeshFactory {
         text.isPointerBlocker = true
         text.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER
         text.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER
-        // text.overlapGroup = 0
+        text.overlapGroup = 0
         adt.addControl(text)
         text.linkWithMesh(mesh)
 

@@ -17,8 +17,8 @@ export class MaterialFactory {
         // 流动材质-纹理
         let flowTexture = new Texture(src, scene);
         // flowTexture.wAng = - Math.PI / 2; // 旋转90度
-        flowTexture.uScale = 1; // 水平缩放为2倍
-        flowTexture.vScale = 2; // 垂直缩放为2倍
+        flowTexture.uScale = 1; // 水平缩放为1倍
+        flowTexture.vScale = 1; // 垂直缩放为1倍
         // 设置纹理的位置偏移
         flowTexture.uOffset = 0; // 在水平方向上偏移0.5个单位
         flowTexture.vOffset = 0; // 在垂直方向上偏移0.5个单位

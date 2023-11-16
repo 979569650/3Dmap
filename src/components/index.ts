@@ -6,7 +6,8 @@ import { Component, Prop, Vue } from "vue-property-decorator";
 import { MaterialFactory } from '../../scene/MaterialFactory';
 import { MeshFactory } from '../../scene/MeshFactory';
 import * as Arial from '../../font/Arial_Bold.json'
-import * as china from '../resources/China.json';
+import * as geographicCenter from '../resources/mapData/geographicCenter.json';
+// import * as china from '../resources/mapData/China.json';
 // import sceneConfig from './sceneConfig';
 // import sceneConfig from '../../public/sceneConfig.js';
 // import { MeshWriter } from 'meshwriter'
@@ -24,18 +25,34 @@ export default class BabylonAPP extends Vue {
     public scene!: Scene;
     public camera: any;
     public _canvas!: HTMLCanvasElement;
+    public area: any;
 
     public sceneConfig: any;
-    mounted() {
+    async mounted() {
+
         const scenecfg: any = window
         this.sceneConfig = scenecfg.sceneCFG
-        // console.log(this.sceneConfig.aio);
-        // console.log(this.sceneConfig.sceneCFG);
+        BABYLON.ScenePerformancePriority.BackwardCompatible
+        // BABYLON.ScenePerformancePriority.Aggressive
+        const mapName = this.sceneConfig.mapWhere
+        const map = import('../resources/mapData/' + mapName + '.json');
+        await map.then((data) => {
+            this.area = data
+        });
 
         this._canvas = document.getElementById('rendCanvas') as HTMLCanvasElement;
         this.engine = new Engine(this._canvas);
+        // this.engine.doNotHandleContextLost = true;
+        // this.engine.enableOfflineSupport = false;
+        this.engine.performanceMonitor
         this.scene = new Scene(this.engine);
-        this.scene.clearColor = new Color4(230 / 255, 224 / 255, 218 / 255);
+        this.scene.clearColor = new Color4(
+            this.sceneConfig.backgroundColor.r / 255,
+            this.sceneConfig.backgroundColor.g / 255,
+            this.sceneConfig.backgroundColor.b / 255
+        );
+        // this.scene.clearCachedVertexData();
+        // this.scene.cleanCachedTextureBuffer();
         // this.scene.debugLayer.show()
         this.camera = new ArcRotateCamera(
             "Camera",
@@ -45,7 +62,23 @@ export default class BabylonAPP extends Vue {
             Vector3.Zero(),
             this.scene
         );
-        this.camera.attachControl(this._canvas, true);
+        if (this.sceneConfig.camera.isControl) {
+            this.camera.attachControl(this._canvas, true);
+        }
+        this.camera.lowerRadiusLimit = this.sceneConfig.camera.lowerRadiusLimit;//视点拉近的最大距离，用于限制视野范围
+        this.camera.upperRadiusLimit = this.sceneConfig.camera.upperRadiusLimit;//视点拉远的最大距离
+        if (this.sceneConfig.camera.lowerAlphaLimit != null) {
+            this.camera.lowerAlphaLimit = this.sceneConfig.camera.lowerAlphaLimit
+        }
+        if (this.sceneConfig.camera.upperAlphaLimit != null) {
+            this.camera.upperAlphaLimit = this.sceneConfig.camera.upperAlphaLimit
+        }
+        if (this.sceneConfig.camera.lowerBetaLimit != null) {
+            this.camera.lowerBetaLimit = this.sceneConfig.camera.lowerBetaLimit
+        }
+        if (this.sceneConfig.camera.upperBetaLimit != null) {
+            this.camera.upperBetaLimit = this.sceneConfig.camera.upperBetaLimit
+        }
         // this.scene.createDefaultLight();
         // this.scene.createDefaultEnvironment();
 
@@ -85,150 +118,70 @@ export default class BabylonAPP extends Vue {
         // var color2 = MaterialFactory.RGB_emissive(254 / 255, 152 / 255, 41 / 255, this.scene)
         // var color3 = MaterialFactory.RGB_emissive(217 / 255, 95 / 255, 13 / 255, this.scene)
         // var color4 = MaterialFactory.RGB_emissive(153 / 255, 51 / 255, 4 / 255, this.scene)
-        var centerX = 108
-        var centerZ = 34
+
+
+        const indexedObj: any = {}
+        geographicCenter.forEach(item => {
+            indexedObj[item.name] = item;
+        })
+
+        var centerX = indexedObj[this.sceneConfig.mapWhere].centroid[0]
+        var centerZ = indexedObj[this.sceneConfig.mapWhere].centroid[1]
         // var grandModel: any = new Mesh("grandModel", this.scene);
         var hight = this.sceneConfig.map.hight;
-        var chinaData = china.features;
+        var chinaData = this.area.features;
         // console.log(chinaData);
-        var flyStar = ['青海', '新疆', '云南', '黑龙江', '广东', '浙江']
-        // var flyLineParent = new Mesh('flyLineParent', this.scene) // 用于存放飞线模型
-        // for (let l = 0; l < chinaData.length; l++) {
-        //     // console.log(l)
-        //     var boundaries = chinaData[l].geometry.coordinates;
-        //     // console.log(boundaries)
-        //     var parentModel = new Mesh(chinaData[l].properties.name, this.scene)
-
-        //     var centerXZ: number[]
-        //     centerXZ = chinaData[l].properties.centroid
-
-        //     // for (var i = 0; i <= 1; i++) {
-        //     boundaries.forEach(pointGroup => {
-        //         var points: any[] = [];
-        //         // console.log(pointGroup)
-        //         pointGroup.forEach(point => {
-        //             // console.log(point)
-        //             point.forEach(point => {
-        //                 points.push(new Vector3(point[0] - centerX, 0, point[1] - centerZ))
-        //             })
-        //         })
-
-        //         // 卡特穆尔-罗姆样条所需点集
-        //         var catmullRom = Curve3.CreateCatmullRomSpline(points, 60, true)
-        //         // console.log(catmullRom.getPoints())
-
-        //         // var cter = CreateSphere('center', { diameter: 0.01 }, this.scene);
-        //         // cter.isVisible = false
-        //         // // if (chinaData[l] !=undefined){
-        //         // cter.position = new Vector3(centerXZ[0] - centerX, hight, centerXZ[1] - centerZ)
-        //         // }
-        //         if (china.features[l].properties.name != undefined) {
-        //             // var name = text(adt, cter, )
-        //             var text = MeshFactory.Text_3D(china.features[l].properties.name, china.features[l].properties.name, this.scene)
-        //             if (text != null) {
-        //                 text.position = new Vector3(centerXZ[0] - centerX, 0, centerXZ[1] - centerZ)
-        //                 text.rotation.x = Math.PI / 2
-        //                 text.material = text_3d_material
-        //                 text.parent = parentModel;
-        //                 text.isPickable = false
-        //                 // 将侧面的材质应用到字体的侧面 
-        //                 // text.sideOrientation = BABYLON.Mesh.DOUBLESIDE; // 设置字体的侧面可见
-        //                 // text.material.subMaterials = [material2];
-        //             }
-        //         }
-
-        //         //面
-        //         // var polygon = CreatePolygon("polygon", points, this.scene);
-        //         var polygon: any = CreatePolygon("polygon", {
-        //             shape: points,
-        //             sideOrientation: BABYLON.Mesh.DOUBLESIDE,
-        //             depth: hight,
-        //             faceUV: [
-        //                 new Vector4(0, 0, 1, 1),
-        //                 new Vector4(0, 0, 1, 1),
-        //                 new Vector4(0, 0, 1, 1)
-        //             ],
-        //             faceColors: [
-        //                 new Color4(
-        //                     sceneConfig.map.topColor.r / 255,
-        //                     sceneConfig.map.topColor.g / 255,
-        //                     sceneConfig.map.topColor.b / 255,
-        //                     sceneConfig.map.topColor.a),
-        //                 new Color4(
-        //                     sceneConfig.map.sideColor.r / 255,
-        //                     sceneConfig.map.sideColor.g / 255,
-        //                     sceneConfig.map.sideColor.b / 255,
-        //                     sceneConfig.map.sideColor.a),
-        //                 new Color4(
-        //                     sceneConfig.map.bottomColor.r / 255,
-        //                     sceneConfig.map.bottomColor.g / 255,
-        //                     sceneConfig.map.bottomColor.b / 255,
-        //                     sceneConfig.map.bottomColor.a),
-        //             ]
-        //         }, this.scene, earcut);
-
-        //         polygon.material = material
-        //         polygon.parent = parentModel;
-        //         polygon.renderingGroupId = 0
-
-
-        //         // //轮廓
-        //         const curveMesh2: any = MeshBuilder.CreateLines("side", { points: catmullRom.getPoints(), updatable: false }, this.scene)
-        //         curveMesh2.enableEdgesRendering(); // 启用边缘渲染
-        //         curveMesh2.edgesWidth = 10; // 设置线条宽度
-        //         curveMesh2.edgesColor = new Color4(
-        //             sceneConfig.map.outlineColor.r / 255,
-        //             sceneConfig.map.outlineColor.g / 255,
-        //             sceneConfig.map.outlineColor.b / 255,
-        //             sceneConfig.map.outlineColor.a); // 设置边缘颜色
-        //         curveMesh2.renderingGroupId = 0;
-        //         curveMesh2.isPickable = false
-        //         curveMesh2.parent = parentModel
-        //         // curveMesh2.color = new BABYLON.Color3(1, 1, 1)
-        //         curveMesh2.alpha = 1
-        //         curveMesh2.parent = parentModel;
-        //         // glow.referenceMeshToUseItsOwnMaterial(curveMesh2)
-        //     })
-        //     // }
-
-        //     parentModel.parent = grandModel;
-
-        // }
+        const flyStar = this.sceneConfig.flyLine.start
+        const flyEnd = this.sceneConfig.flyLine.end
         const ChinaMap = MeshFactory.map(chinaData, centerX, centerZ, hight, this.scene) // 生成地图
-        const flyLine = MeshFactory.flyLine(chinaData, centerX, centerZ, flyStar, this.engine, this.scene)
-        // flyLine(this.scene, this.engine);
-
+        if (this.sceneConfig.flyLine.switch) {
+            for (let i = 0; i < flyStar.length; i++) {
+                const flyLine = MeshFactory.flyLine(chinaData, centerX, centerZ, flyStar[i], indexedObj[flyEnd[i]].center, this.sceneConfig.flyLine.color[i], this.engine, this.scene)
+            }
+        }
 
         // 数字
-        chinaData.forEach(f => {
-            var newColor = [
-                new Color4(
-                    255 / 255,
-                    255 / 255,
-                    0 / 255,
-                    1
-                ),
-                new Color4(
-                    128 / 255,
-                    128 / 255,
-                    128 / 255,
-                    1
-                ),
-                new Color4(
-                    255 / 255,
-                    255 / 255,
-                    0 / 255,
-                    1
-                )
-            ];
-            if (flyStar.includes(f.properties.name)) {
-                var num = MeshFactory.Text_3D('', '12345', this.scene, { font: Arial, faceColor: newColor })
-                num.position = new Vector3(f.properties.centroid[0] - centerX, 0, f.properties.centroid[1] - centerZ - 0.8)
-                num.isPickable = false
-                num.rotation.x = Math.PI / 2
-                num.material = text_3d_material
-            }
-        });
+        if (this.sceneConfig.Number3D.switch) {
+            chinaData.forEach((f: { properties: { name: string; centroid: number[]; center: number[] }; }) => {
+                // 新作一个颜色，代替Text_3D的颜色
+                var newColor = this.sceneConfig.Number3D.color != undefined ? [
+                    new Color4(
+                        this.sceneConfig.Number3D.color.topColor.r / 255,
+                        this.sceneConfig.Number3D.color.topColor.g / 255,
+                        this.sceneConfig.Number3D.color.topColor.b / 255,
+                        this.sceneConfig.Number3D.color.topColor.a
+                    ),
+                    new Color4(
+                        this.sceneConfig.Number3D.color.sideColor.r / 255,
+                        this.sceneConfig.Number3D.color.sideColor.g / 255,
+                        this.sceneConfig.Number3D.color.sideColor.b / 255,
+                        this.sceneConfig.Number3D.color.sideColor.a
+                    ),
+                    new Color4(
+                        this.sceneConfig.Number3D.color.bottomColor.r / 255,
+                        this.sceneConfig.Number3D.color.bottomColor.g / 255,
+                        this.sceneConfig.Number3D.color.bottomColor.b / 255,
+                        this.sceneConfig.Number3D.color.bottomColor.a
+                    )
+                ] : undefined
+                flyStar.forEach((start: string | string[]) => {
+                    if (start.includes(f.properties.name)) {
+                        console.log();
+
+                        var num = MeshFactory.Text_3D('', '12345', this.scene, { font: Arial, faceColor: newColor })
+                        if (f.properties.centroid != undefined) {
+                            num.position = new Vector3(f.properties.centroid[0] - centerX, 0, f.properties.centroid[1] - centerZ - 0.8)
+                        } else if (f.properties.center != undefined) {
+                            num.position = new Vector3(f.properties.center[0] - centerX, 0, f.properties.center[1] - centerZ - 0.8)
+                        }
+
+                        num.isPickable = false
+                        num.rotation.x = Math.PI / 2
+                        num.material = text_3d_material
+                    }
+                })
+            });
+        }
 
 
 
@@ -247,54 +200,12 @@ export default class BabylonAPP extends Vue {
                     }
                     temMesh = pickedMesh;
                 }
-                // if (children.position.y !== 1.5) {
-                // gsap.to(camera.target, { x: children.getChildren()[0].position.x * 2, y: 2.5, z: children.getChildren()[0].position.z * 2, duration: 1, ease: 'Power1.easeInout' })
-                // gsap.to(camera, { radius: 30, duration: 1, ease: 'Power1.easeInout' })
-                // gsap.to(children.position, { y: 1.5, duration: 1, ease: 'Power1.easeInout' })
-                // children.position.y = 1.5
-                // children._children.forEach((child: any) => {
-                //     /* if (child.name == 'h') {
-                //       // child.material = material32
-                //       child.material = child.metadata[1]
-                //     }
-                //     if (child.name == 'polygon') {
-                //       // child.material = material1
-                //       child.material = child.metadata[1]
-                //     } */
-                //     if (child.name == 'polygon') {
-                //         child.material = material2
-                //     }
-
-                //     // child.edgesColor = new BABYLON.Color4(1, 1, 1, 1)
-                //     // child.renderingGroupId = 1
-                // })
             }
             else {
                 if (temMesh != undefined && temMesh != null) {
                     temMesh.material = temMesh.metadata.materialLog[0]
                     temMesh = null;
                 }
-                // children.position.y = 0
-                // gsap.to(children.position, { y: 0, duration: 1, ease: 'Power1.easeInout' })
-                // gsap.to(camera, { radius: 50, duration: 1, ease: 'Power1.easeInout' })
-                // gsap.to(camera.target, { x: 0, y: 0, z: 0, duration: 1, ease: 'Power1.easeInout' })
-                // children._children.forEach((child: any) => {
-                //     // if (child.onReady != '1') {
-                //     /* if (child.name == 'h') {
-                //       child.material = material3
-                //     }
-                //     if (child.name == 'polygon') {
-                //       child.material = material
-                //     } */
-                //     if (child.name == 'polygon') {
-                //         child.material = material
-                //     }
-                //     // child.edgesColor = new BABYLON.Color4(0, 1, 1, 1)
-                //     // child.renderingGroupId = 0
-                //     // }
-                // })
-                // }
-                // })
             }
         }
         this._canvas.addEventListener('pointermove', onPointerOver, false)
@@ -310,55 +221,6 @@ export default class BabylonAPP extends Vue {
             }
         }
         this._canvas.addEventListener('click', postMes, false)
-
-        /* function flyLine(scene: Scene, engine: Engine) {
-            const color = new Color3(
-                sceneConfig.flyLine.color.r / 255,
-                sceneConfig.flyLine.color.g / 255,
-                sceneConfig.flyLine.color.b / 255) // 颜色
-            const result = MaterialFactory.picMaterial(require('../resources/arrow2.jpg'), color, scene) // 引用资源
-            const pMaterial = result.picMaterial
-
-
-            china.features.forEach(f => {
-                if (flyStar.includes(f.properties.name)) {
-                    if (f.properties.center != undefined) {
-                        var x0 = (117.000923 - centerX)
-                        var z0 = (36.675807 - centerZ)
-                        var x = (f.properties.center[0] - centerX)
-                        var z = (f.properties.center[1] - centerZ)
-
-
-                        var pathPoint = [
-                            new Vector3(x0, 0.5, z0),
-                            new Vector3(
-                                x0 + (x - x0) * 0.3,
-                                Math.abs(Math.sqrt((x - x0) * (x - x0) + (z - z0) * (z - z0)) * 0.5),
-                                z0 + (z - z0) * 0.3 + Math.abs(z - z0) * 0.5
-                            ),
-                            new Vector3(
-                                x0 + (x - x0) * 0.7,
-                                Math.abs(Math.sqrt((x - x0) * (x - x0) + (z - z0) * (z - z0)) * 0.5),
-                                z0 + (z - z0) * 0.9 + Math.abs(z - z0) * 0.5
-                            ),
-                            new Vector3(x, 0.5, z)
-                        ]
-                        var path = MeshFactory.BezierLine(pathPoint).getPoints()
-                        var Wl = MeshFactory.widthLine('feixian', 0.5, path, undefined)
-                        // Wl.position.y += hight;
-                        Wl.material = pMaterial
-                        Wl.renderingGroupId = 2
-                        Wl.isPickable = false
-                        Wl.parent = flyLineParent
-                    }
-                }
-
-            })
-
-            engine.runRenderLoop(() => {
-                result.flowTexture.vOffset += sceneConfig.flyLine.speed
-            })
-        } */
 
 
         // 经纬度转换
