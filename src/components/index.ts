@@ -1,4 +1,4 @@
-import { ArcRotateCamera, Color3, Color4, CreatePolygon, Curve3, Engine, Mesh, MeshBuilder, Scene, SpotLight, Vector3, Vector4 } from '@babylonjs/core';
+import { ArcRotateCamera, Color3, Color4, CreatePolygon, Curve3, Engine, HemisphericLight, Mesh, MeshBuilder, Scene, SpotLight, Vector3, Vector4 } from '@babylonjs/core';
 import { AdvancedDynamicTexture, Control, TextBlock } from '@babylonjs/gui';
 import * as BABYLON from "babylonjs";
 import * as earcut from 'earcut';
@@ -7,6 +7,9 @@ import { MaterialFactory } from '../../scene/MaterialFactory';
 import { MeshFactory } from '../../scene/MeshFactory';
 import * as Arial from '../../font/Arial_Bold.json'
 import * as geographicCenter from '../resources/mapData/geographicCenter.json';
+
+import * as cityData from '../resources/city/buildings.json'
+// import { AmbientLight } from 'three';
 // import * as china from '../resources/mapData/China.json';
 // import sceneConfig from './sceneConfig';
 // import sceneConfig from '../../public/sceneConfig.js';
@@ -90,6 +93,7 @@ export default class BabylonAPP extends Vue {
     }
     init() {
         this.chinaMap();
+        // this.city();
     }
     chinaMap() {
         // console.log(sceneConfig);
@@ -235,6 +239,72 @@ export default class BabylonAPP extends Vue {
             const minutes = Math.floor((value - degrees) * 60);
             const seconds = ((value - degrees - minutes / 60) * 3600).toFixed(2);
             return `${degrees}°${minutes}'${seconds}"`;
+        }
+    }
+
+    city() {
+
+        var light = new HemisphericLight("light1", new Vector3(1, 1, 0), this.scene);
+        light.diffuse = new BABYLON.Color3(1, 1, 1); // 设置环境光的漫射颜色为白色
+
+        const parent = new Mesh("", this.scene)
+        const color = MaterialFactory.RGB_diffuse(0.5, 0.5, 0.5, this.scene)
+        color.zOffset = -1
+        cityData.features.forEach(city => {
+            if (city.geometry.type === 'Polygon') {
+
+                city.geometry.coordinates.forEach((PointGroup: any) => {
+                    var point: any[] = [];
+                    // console.log(PointGroup[0]);
+                    PointGroup.forEach((p: number[]) => {
+                        point.push(new Vector3((p[0] - 121.4526817) * 1000, 0, (p[1] - 37.4731951) * 1000))
+                    })
+                    // point.push(new Vector3((PointGroup[0] - 121.4526817) * 1000, 0, (PointGroup[1] - 37.4731951) * 1000))
+                    const polygon: Mesh = CreatePolygon("polygon", {
+                        shape: point,
+                        sideOrientation: Mesh.DOUBLESIDE,
+                        depth: city.properties.height != undefined ? parseInt(city.properties.height) : 30,
+                        // depth: 10,
+                    }, this.scene, earcut);
+                    polygon.position.y = city.properties.height != undefined ? parseInt(city.properties.height) : 30
+                    polygon.parent = parent
+                })
+
+
+
+                // if (city.properties.Id === 1000) {
+                //     polygon.position.y = -0.1
+                // }
+
+                // if (city.properties.fillColor != undefined) {
+                //     var pm = color.clone("")
+                //     pm.diffuseColor = new Color3(
+                //         hexToRgb(city.properties.fillColor).r / 255,
+                //         hexToRgb(city.properties.fillColor).g / 255,
+                //         hexToRgb(city.properties.fillColor).b / 255,
+                //     );
+                //     polygon.material = pm
+                // }
+
+            }
+        })
+        parent.scaling = new Vector3(100, 1, 100)
+        // this.camera.radius = 600
+        console.log(this.scene.meshes);
+
+
+
+        function hexToRgb(hex: string) {
+            // 移除可能的 # 前缀
+            hex = hex.replace('#', '');
+
+            // 拆分颜色值为红、绿、蓝的部分
+            var r = parseInt(hex.substring(0, 2), 16);
+            var g = parseInt(hex.substring(2, 4), 16);
+            var b = parseInt(hex.substring(4, 6), 16);
+
+            // 返回 RGB 值
+            return { r, g, b }
         }
     }
 }
