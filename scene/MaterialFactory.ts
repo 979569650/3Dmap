@@ -68,4 +68,18 @@ export class MaterialFactory {
         return RGB
     }
 
+    /**
+     * 漫反射材质
+     * @param r 
+     * @param g 
+     * @param b 
+     * @param scene 
+     * @returns 
+     */
+    public static RGB_diffuse(r: any, g: any, b: any, scene: any) {
+        const RGB = new StandardMaterial("RGB", scene,)
+        RGB.diffuseColor = new Color3(r, g, b)
+        return RGB
+    }
+
 }
