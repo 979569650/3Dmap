@@ -1,7 +1,6 @@
 <template>
   <div class="home">
-    <!-- <img alt="Vue logo" src="../assets/logo.png"> -->
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
+    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
   </div>
 </template>
 
@@ -14,13 +13,13 @@ import HelloWorld from '@/components/HelloWorld.vue'; // @ is an alias to /src
     HelloWorld,
   },
 })
-export default class HomeView extends Vue {}
+export default class HomeView extends Vue { }
 </script>
 
 <style>
-  .home{
-    margin: 0;
-    width : 100%;
-    height: 100%;
-  }
+.home {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
 </style>

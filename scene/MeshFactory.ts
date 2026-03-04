@@ -7,9 +7,6 @@ import { AdvancedDynamicTexture, Control, TextBlock } from "@babylonjs/gui"
 import * as YSBTH from '../font/YouSheBiaoTiHei_Regular.json';
 import * as earcut from 'earcut';
 import { MaterialFactory } from "./MaterialFactory";
-// import sceneConfig from "@/components/sceneConfig";
-// import { MaterialFactory } from "./MaterialFactory";
-// import * as GUI from "@babylonjs/gui";
 
 
 export class MeshFactory {
@@ -78,28 +75,6 @@ export class MeshFactory {
         });
 
         return extruded
-    }
-
-    /**
-     * 天空例子效果
-     */
-    public static SkyParticle(scene: Scene) {
-        var particleSystem = new ParticleSystem("snow", 2000, scene);
-        particleSystem.emitter = new Vector3(0, 120, 0);  // 设置发射器位置为天空的某个点
-        particleSystem.minEmitBox = new Vector3(-100, 0, -100);  // 设置发射器的边界范围
-        particleSystem.maxEmitBox = new Vector3(100, 0, 100);
-        particleSystem.gravity = new Vector3(0, -9.81, 0);  // 设置重力向下
-
-        particleSystem.particleTexture = new Texture("../resources/images/snow.png", scene);
-        particleSystem.color1 = new Color4(1, 1, 1, 1);
-        particleSystem.color2 = new Color4(0.8, 0.8, 1, 1);
-        particleSystem.minSize = 0.2;
-        particleSystem.maxSize = 1.5;
-        particleSystem.minLifeTime = 15;
-        particleSystem.maxLifeTime = 30;
-        particleSystem.emitRate = 240;
-
-        particleSystem.start();
     }
 
 
